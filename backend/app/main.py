@@ -71,6 +71,20 @@ async def health():
     return {"status": "ok"}
 
 
+@app.get("/debug/env")
+async def debug_env():
+    """Temporary: show masked env vars to diagnose Render config issues."""
+    url = os.environ.get("SUPABASE_URL", "")
+    key = os.environ.get("SUPABASE_ANON_KEY", "")
+    return {
+        "SUPABASE_URL": url[:30] + "..." if len(url) > 30 else url,
+        "SUPABASE_ANON_KEY_len": len(key),
+        "SUPABASE_ANON_KEY_start": key[:20] if key else "",
+        "SUPABASE_ANON_KEY_end": key[-10:] if key else "",
+        "SUPABASE_ANON_KEY_has_whitespace": key != key.strip(),
+    }
+
+
 # ---------------------------------------------------------------------------
 # Data endpoints
 # ---------------------------------------------------------------------------
