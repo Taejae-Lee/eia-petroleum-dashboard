@@ -73,7 +73,7 @@ function buildYoYDataset(
 
 // ── 3-month zoom dataset ──────────────────────────────────────────────────────
 
-type ZoomRow = { date: string } & Record<string, number | null>;
+type ZoomRow = { date: string; [year: string]: number | null | string };
 
 function buildZoomDataset(
   allData: WeeklyReport[],
