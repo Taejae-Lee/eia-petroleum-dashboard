@@ -2,20 +2,55 @@ import asyncio
 import logging
 import os
 from collections import defaultdict
+from contextlib import asynccontextmanager
 from datetime import date, timedelta
 from typing import Optional
 
 import httpx
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.crawler import crawl_full, crawl_latest
+from app.crawler import crawl_latest
+from app.crawler import crawl_full
 from app.database import get_supabase
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="EIA Weekly Petroleum Status API", version="1.0.0")
+
+# ---------------------------------------------------------------------------
+# Scheduler — daily crawl at 15:30 UTC (EIA releases ~10:30 AM ET on Wednesdays)
+# ---------------------------------------------------------------------------
+
+async def _scheduled_crawl():
+    logger.info("Scheduled crawl: starting crawl_latest()")
+    try:
+        await crawl_latest()
+        logger.info("Scheduled crawl: completed successfully")
+    except Exception as exc:
+        logger.error("Scheduled crawl: failed — %s", exc)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler = AsyncIOScheduler()
+    # Run daily at 15:30 UTC — catches Wednesday EIA release (10:30 AM ET)
+    scheduler.add_job(
+        _scheduled_crawl,
+        CronTrigger(hour=15, minute=30, timezone="UTC"),
+        id="daily_crawl",
+        replace_existing=True,
+    )
+    scheduler.start()
+    logger.info("Scheduler started: daily crawl at 15:30 UTC")
+    yield
+    scheduler.shutdown()
+    logger.info("Scheduler stopped")
+
+
+app = FastAPI(title="EIA Weekly Petroleum Status API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

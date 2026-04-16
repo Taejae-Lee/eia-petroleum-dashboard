@@ -91,8 +91,8 @@ export default function FuturesPrices() {
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <PriceCard label="WTI Crude Spot" ticker="RWTC" quote={data?.wti ?? null} />
-      <PriceCard label="Dated Brent" ticker="RBRTE" quote={data?.brent ?? null} />
+      <PriceCard label="WTI Cushing Spot" ticker="RWTC" quote={data?.wti ?? null} />
+      <PriceCard label="Europe Brent Spot" ticker="RBRTE" quote={data?.brent ?? null} />
       {lastFetched && (
         <span className="text-slate-600 text-[10px] hidden sm:inline">
           {lastFetched.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
