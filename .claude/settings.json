@@ -1,0 +1,36 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /home/user/workspace/sai-claude-workshop && file=\"$CLAUDE_TOOL_INPUT_FILE_PATH\"; if echo \"$file\" | grep -q '\\.py$'; then python3 -m ruff format \"$file\" 2>/dev/null && echo \"[hook] ruff formatted: $file\"; fi"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=\"$CLAUDE_TOOL_INPUT_COMMAND\"; if echo \"$cmd\" | grep -qE '(rm -rf|drop table|DELETE FROM.*WHERE|git reset --hard)'; then echo \"[hook] WARN: 위험한 명령 감지됨 — $cmd\" >&2; fi"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"\\n====== Claude 작업 완료 ======\" && cd /home/user/workspace/sai-claude-workshop && git status --short 2>/dev/null | head -20"
+          }
+        ]
+      }
+    ]
+  }
+}
